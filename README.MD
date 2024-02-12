@@ -14,3 +14,10 @@
 - run `php src/migrations/initial.php` to create required table in db
 - go to `http://<vhost>` in your web browser
 
+### Docker
+- cp .env.dist .env and set proper environment variables for the Docker Compose
+- cp src/.env.dist src/.env and set proper environment variables for the App
+- run `docker compose build`
+- run `docker compose up -d`
+- run `docker compose exec web php src/migrations/initial.php` to create required table in db
+- go to `http://localhost:8080` in your web browser
