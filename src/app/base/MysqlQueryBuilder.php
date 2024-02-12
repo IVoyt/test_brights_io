@@ -2,9 +2,10 @@
 
 namespace app\base;
 
-use app\models\ListContact;
 use Exception;
+use JetBrains\PhpStorm\NoReturn;
 use PDO;
+use PDOException;
 
 /**
  *
@@ -17,17 +18,26 @@ final class MysqlQueryBuilder extends QueryBuilder
         $application          = Application::getInstance();
         $dbConfig             = $application->getDbConfig();
 
-        $this->pdo            = new PDO(
-            "{$dbConfig['connection']}:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['database']}",
-            $dbConfig['username'],
-            $dbConfig['password']
-        );
+        try {
+            $this->pdo = new PDO(
+                "{$dbConfig['connection']}:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['database']}",
+                $dbConfig['username'],
+                $dbConfig['password']
+            );
+        } catch (PDOException $exception) {
+            $this->renderError('Unable to connect to DB!', $exception);
+        }
     }
 
     public function getSchema(): array
     {
         $attributes = [];
-        $schema     = $this->pdo->query("SHOW COLUMNS FROM {$this->tableName};")->fetchAll();
+        try {
+            $schema = $this->pdo->query("SHOW COLUMNS FROM {$this->tableName};")->fetchAll();
+        } catch (PDOException $exception) {
+            $this->renderError('Table was not found. Run migration first!', $exception);
+        }
+
         foreach ($schema as $value) {
             $attributes[$value['Field']] = null;
         }
@@ -99,5 +109,15 @@ final class MysqlQueryBuilder extends QueryBuilder
             ],
             "UPDATE {$this->tableName} SET %FIELD_VALUE% WHERE %WHERE%;"
         );
+    }
+
+    #[NoReturn] private function renderError(string $message, PDOException $exception): void
+    {
+        $title           = 'DB Error...';
+        $originalMessage = $exception->getMessage();
+        ob_start();
+        include_once view_path('error.php');
+        ob_get_contents();
+        die();
     }
 }

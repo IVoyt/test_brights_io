@@ -9,7 +9,7 @@ $application = Application::getInstance();
 $dbConfig    = $application->getDbConfig();
 
 $pdo = new PDO(
-    "{$dbConfig['connection']}:host={$dbConfig['host']};port=9906;dbname={$dbConfig['database']}",
+    "{$dbConfig['connection']}:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['database']}",
     $dbConfig['username'],
     $dbConfig['password']
 );
