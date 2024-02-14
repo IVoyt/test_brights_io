@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3.8'
 
 services:
   mysql:
@@ -14,10 +14,6 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
 
-  composer:
-    image: composer
-    container_name: 'composer'
-
   web:
     container_name: 'web'
     build:
@@ -25,9 +21,13 @@ services:
       dockerfile: .docker/web/Dockerfile
     ports:
       - "8080:80"
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /var/www/html/src
     depends_on:
       - mysql
-      - composer
 
 volumes:
   db_data:
