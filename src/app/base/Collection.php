@@ -58,4 +58,9 @@ class Collection implements Iterator
     {
         $this->position = 0;
     }
+
+    public function count(): int
+    {
+        return count($this->items);
+    }
 }

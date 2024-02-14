@@ -58,7 +58,11 @@ final class MysqlQueryBuilder extends QueryBuilder
      */
     public function update(int $id, array $data): DataMapper
     {
-        $this->where[] = ['AND' => ['id' => $id]];
+        $where = "id = {$id}";
+        if (!empty($this->where)) {
+            $where = " AND {$where}";
+        }
+        $this->where[] = $where;
 
         return $this->dataManipulationQuery(false, $data, $id);
     }
@@ -105,9 +109,9 @@ final class MysqlQueryBuilder extends QueryBuilder
             ],
             [
                 implode(',', $fields),
-                implode("\n", $this->where),
+                $this->where ? 'WHERE '. implode("\n", $this->where) : '',
             ],
-            "UPDATE {$this->tableName} SET %FIELD_VALUE% WHERE %WHERE%;"
+            "UPDATE {$this->tableName} SET %FIELD_VALUE% %WHERE%;"
         );
     }
 

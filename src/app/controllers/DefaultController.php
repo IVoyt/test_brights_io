@@ -15,7 +15,10 @@ final class DefaultController extends Controller
     public function index(): Response
     {
         /** @var ListContact[] $contacts */
-        $contacts = ListContact::query()->orderBy('id', 'desc')->all();
+        $contacts = ListContact::query()
+            ->orderBy('sort_order')
+            ->orderBy('id', 'desc')
+            ->all();
         return $this->render(['contacts' => $contacts]);
     }
 
@@ -31,6 +34,24 @@ final class DefaultController extends Controller
         return $this->render(['model' => $model->toArray()]);
     }
 
+    /**
+     * @throws Exception
+     */
+    public function sort(Request $request): void
+    {
+        foreach ($request->input() as $id => $sortOrder) {
+            ListContact::query()->update($id, ['sort_order' => $sortOrder]);
+        }
+
+        $request->setContentType(Request::CONTENT_TYPE_JSON);
+
+        http_response_code(204);
+        $this->render();
+    }
+
+    /**
+     * @throws Exception
+     */
     public function delete(int $id): void
     {
         ListContact::delete($id);

@@ -1,32 +1,49 @@
-let modalInstance = null;
-const modelElem = document.querySelector('#add-contact-modal');
-modelElem.addEventListener('shown.bs.modal', function (){
-    modalInstance = bootstrap.Modal.getInstance(modelElem);
+let addModalInstance = null;
+let deleteModalInstance = null;
+const addModelElem = document.querySelector('#add-contact-modal');
+const deleteModelElem = document.querySelector('#delete-contact-modal');
+addModelElem.addEventListener('shown.bs.modal', function (){
+    addModalInstance = bootstrap.Modal.getInstance(addModelElem);
 });
-modelElem.addEventListener('hidden.bs.modal', function (){
-    modalInstance = null;
+addModelElem.addEventListener('hidden.bs.modal', function (){
+    addModalInstance = null;
+});
+
+deleteModelElem.addEventListener('hidden.bs.modal', function (){
+    deleteModalInstance = bootstrap.Modal.getInstance(deleteModelElem);
+    document.querySelector('#submit-delete-contact').setAttribute('data-id', '');
+});
+deleteModelElem.addEventListener('hidden.bs.modal', function (){
+    deleteModalInstance = null;
 });
 
 window.onkeydown = function(key) {
-    if (key.key === 'Enter' && modalInstance !== null) {
+    if (key.key === 'Enter' && addModalInstance !== null) {
         document.querySelector('#submit-add-contact').click();
     }
 }
 
 function deleteBtnRegisterOnClick () {
-    document.querySelectorAll('.delete-contact').forEach(function (item) {
-        item.onclick = function (item) {
-            const id = item.target.getAttribute('data-id');
-            const row = item.target.parentNode.parentNode;
-
-            const xhr = getXHR('DELETE', `/${id}/delete}`);
-            xhr.send();
-
-            xhr.addEventListener('load', xhrDeleteListener.bind(xhr, row), false);
-        };
-    });
+    document.querySelectorAll('.delete-contact').forEach(function(item) {
+        item.onclick = function() {
+            console.log(item.getAttribute('data-id'))
+            document
+                .querySelector('#submit-delete-contact')
+                .setAttribute('data-id', item.getAttribute('data-id'));
+        }
+    })
 }
 deleteBtnRegisterOnClick();
+
+document.querySelector('#submit-delete-contact').onclick = function (item) {
+    const id = item.target.getAttribute('data-id');
+    const row = document.querySelector(`#contacts-list-body > tr[data-id="${id}"]`);
+
+    const xhr = getXHR('DELETE', `/${id}/delete}`);
+    xhr.send();
+
+    xhr.addEventListener('load', xhrDeleteListener.bind(xhr, row), false);
+};
 
 function xhrAddListener(form, evt) {
     const responseData = JSON.parse(this.responseText);
@@ -39,6 +56,14 @@ function xhrAddListener(form, evt) {
     const newRow = document.createElement('tr');
     newRow.classList = 'align-middle';
     newRow.innerHTML =
+        `<th class="text-center">` +
+        `   <button class="btn btn-outline-secondary move-before">` +
+        `       <i class="bi bi-arrow-up"></i>` +
+        `   </button>` +
+        `   <button class="btn btn-outline-secondary move-after">` +
+        `      <i class="bi bi-arrow-down"></i>` +
+        `   </button>` +
+        `</th>` +
         `<th class="text-center">${contact.id}</th>` +
         `<td>${contact.email_address}</td>` +
         `<td>${contact.name}</td>` +
@@ -51,6 +76,8 @@ function xhrAddListener(form, evt) {
 
     deleteBtnRegisterOnClick();
 
+    updateMoveButtonsDisabledAttribute();
+
     const inputs = form.querySelectorAll('input');
     inputs.forEach(function (elm) {
         elm.value = '';
@@ -61,6 +88,8 @@ function xhrDeleteListener(row, evt) {
     if ([200,204].includes(this.status)) {
         row.remove();
     }
+
+    document.querySelector('#close-delete-contact').click();
 }
 
 document.querySelector('#submit-add-contact').onclick = function() {
