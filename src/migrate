@@ -1,0 +1,25 @@
+<?php
+
+require_once 'vendor/autoload.php';
+require_once 'app/helpers.php';
+
+$migrationName = str_replace('.php', '', $argv[1] ?? null);
+
+$migrations = array_map(function ($item) {
+    return str_replace('.php', '', $item);
+}, array_diff(scandir('migrations'), array('.', '..')));
+
+if (!$migrationName) {
+    die("You must specify migration name.\n");
+}
+
+if (!in_array($migrationName, $migrations, true)) {
+    die("Unknown migration!\n");
+}
+
+require "migrations/{$migrationName}.php";
+$className = preg_replace('/\d{8}-\d{4}_/', '', $migrationName);
+$className = str_replace('_', '', ucwords($className, '_')).'Migration';
+
+$class = new $className;
+$class->run();

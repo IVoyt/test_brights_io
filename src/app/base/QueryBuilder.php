@@ -8,16 +8,15 @@ use PDO;
 
 abstract class QueryBuilder
 {
-    protected PDO     $pdo;
-    protected string  $tableName;
-    protected string  $modelClassName;
-    protected array   $fields    = [];
-    protected array   $join      = [];
-    protected array   $where     = [];
-    protected ?string $orderBy   = null;
-    protected ?string $sortOrder = null;
-    protected ?int    $limit     = null;
-    protected int     $offset    = 0;
+    protected PDO    $pdo;
+    protected string $tableName;
+    protected string $modelClassName;
+    protected array  $fields    = [];
+    protected array  $join      = [];
+    protected array  $where     = [];
+    protected array  $orderBy   = [];
+    protected ?int   $limit     = null;
+    protected int    $offset    = 0;
 
     abstract public function getSchema(): array;
 
@@ -75,12 +74,11 @@ abstract class QueryBuilder
 
     public function orderBy(string $column, string $sortOrder = 'ASC'): self
     {
-        $this->orderBy = $column;
         $sortOrder     = strtoupper($sortOrder);
         if (!in_array($sortOrder, ['ASC', 'DESC'])) {
             $sortOrder = 'ASC';
         }
-        $this->sortOrder = $sortOrder;
+        $this->orderBy[$column] = $sortOrder;
 
         return $this;
     }
@@ -167,6 +165,10 @@ abstract class QueryBuilder
             $this->fields = [$this->tableName . '.*'];
         }
 
+        $orderBy = [];
+        foreach ($this->orderBy as $column => $direction) {
+            $orderBy[] = "{$column} {$direction}";
+        }
         $queryString = str_replace(
             [
                 '%SELECT%',
@@ -181,7 +183,7 @@ abstract class QueryBuilder
                 $this->where
                     ? 'WHERE ' . implode("\n", $this->where)
                     : '',
-                "ORDER BY {$this->orderBy} {$this->sortOrder}",
+                "ORDER BY " . implode(', ', $orderBy),
                 $this->limit
                     ? "LIMIT {$this->limit} OFFSET {$this->offset}"
                     : ''
